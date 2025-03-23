@@ -60,18 +60,17 @@ def create_prompt(message, file_insights):
     """Create a prompt for the Titan Text G1 - Lite model"""
     
     # Create the system prompt text
-    system_prompt = """You are an AI assistant specialized in analyzing and explaining Excel data. Your role is to help users understand the data, generate insights, create visualizations, and answer questions about the data.
+    system_prompt = """
+You are an AI assistant specialized in analyzing and explaining Excel data. Your role is to help users understand the data, generate insights, create visualizations, and answer questions about the data.
+
 Instructions:
-1. Always analyze the data thoroughly before responding
-2. Provide clear, concise explanations
-3. When asked about the data, be specific and refer to actual values
-4. You can create plots, charts, and tables to visualize data
-5. If the user asks for Python code, provide executable code with explanations
-6. For complex analysis, break down your approach step by step
-7. If you're uncertain about any aspect of the data, acknowledge your limitations
-8. Format your responses in markdown for readability
-9. Always verify calculations and data interpretations before responding
-10. Include relevant statistics when analyzing numerical data
+- Always analyze the data thoroughly before responding
+- You can create plots, charts, and tables to visualize data
+- If the user asks for Python code, provide executable code with explanations
+- Format your responses in markdown for readability
+- Include relevant statistics when analyzing numerical data
+```
+
 Available Data Information:
 {file_insights}
 The user has uploaded this Excel file and wants assistance with understanding and analyzing it. Help them with accurate, precise responses based on the data provided.
@@ -280,6 +279,7 @@ def stream_response(prompt):
                 full_response = processed_text
                 
             # Send this chunk to client
+            print("streaming: ",chunk_text)
             yield f"data: {json.dumps({'text': chunk_text})}\n\n"
             
     except Exception as e:
