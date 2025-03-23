@@ -1,6 +1,6 @@
 
 # app.py
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 import os
 import pandas as pd
@@ -184,6 +184,7 @@ def chat():
     try:
         data = request.json
         message = data.get('message')
+        stream_mode = data.get('stream', False)
         
         if not message:
             return jsonify({'error': 'No message provided'}), 400
@@ -191,47 +192,132 @@ def chat():
         # Create the prompt for AWS Bedrock Titan model
         prompt = create_prompt(message, file_data['insights'])
         
-        # Call AWS Bedrock with Titan model
-        response = bedrock_runtime.invoke_model(
-            modelId='amazon.titan-text-lite-v1',
-            contentType='application/json',
-            accept='application/json',
-            body=json.dumps(prompt)
-        )
-        print("model response: ", response)
-        
-        # Parse the response - Titan has a different response format
-        response_body = json.loads(response['body'].read().decode('utf-8'))
-        # Extract text from Titan response format
-        ai_response = response_body['results'][0]['outputText']
-        
-        # Check if response contains a request for plot generation
-        if '[[PLOT' in ai_response:
-            # Extract plot information
-            plot_info = ai_response.split('[[PLOT')[1].split(']]')[0].strip()
-            plot_params = json.loads(plot_info)
-            
-            # Get the specified sheet
-            sheet = plot_params.get('sheet', list(file_data['dataframes'].keys())[0])
-            df = pd.DataFrame(file_data['dataframes'][sheet])
-            
-            # Generate the plot
-            plot_image = generate_plot(
-                df,
-                plot_params.get('type', 'bar'),
-                plot_params.get('x'),
-                plot_params.get('y'),
-                plot_params.get('title')
+        # Handle streaming mode
+        if stream_mode:
+            return Response(
+                stream_response(prompt),
+                content_type='text/event-stream'
             )
+        else:
+            # Non-streaming mode (original code)
+            response = bedrock_runtime.invoke_model(
+                modelId='amazon.titan-text-lite-v1',
+                contentType='application/json',
+                accept='application/json',
+                body=json.dumps(prompt)
+            )
+            print("model response: ", response)
             
-            # Replace the plot placeholder with the actual image
-            ai_response = ai_response.replace(f'[[PLOT{plot_info}]]', f'![{plot_params.get("title", "Plot")}]({plot_image})')
-        
-        return jsonify({'response': ai_response})
+            # Parse the response - Titan has a different response format
+            response_body = json.loads(response['body'].read().decode('utf-8'))
+            # Extract text from Titan response format
+            ai_response = response_body['results'][0]['outputText']
+            
+            # Check if response contains a request for plot generation
+            if '[[PLOT' in ai_response:
+                # Extract plot information
+                plot_info = ai_response.split('[[PLOT')[1].split(']]')[0].strip()
+                plot_params = json.loads(plot_info)
+                
+                # Get the specified sheet
+                sheet = plot_params.get('sheet', list(file_data['dataframes'].keys())[0])
+                df = pd.DataFrame(file_data['dataframes'][sheet])
+                
+                # Generate the plot
+                plot_image = generate_plot(
+                    df,
+                    plot_params.get('type', 'bar'),
+                    plot_params.get('x'),
+                    plot_params.get('y'),
+                    plot_params.get('title')
+                )
+                
+                # Replace the plot placeholder with the actual image
+                ai_response = ai_response.replace(f'[[PLOT{plot_info}]]', f'![{plot_params.get("title", "Plot")}]({plot_image})')
+            
+            return jsonify({'response': ai_response})
 
     except Exception as e:
         print("chat error: ", e)
         return jsonify({'error': str(e)}), 500
 
+def stream_response(prompt):
+    """Generator function to stream the response from Bedrock"""
+    try:
+        # Initialize streaming response
+        response = bedrock_runtime.invoke_model_with_response_stream(
+            modelId='amazon.titan-text-lite-v1',
+            contentType='application/json',
+            accept='application/json',
+            body=json.dumps(prompt)
+        )
+        
+        # Buffer for accumulating text to check for plot requests
+        full_response = ""
+        
+        # Process each chunk as it comes in
+        for event in response.get('body'):
+            chunk = json.loads(event['chunk']['bytes'].decode('utf-8'))
+            
+            # For Titan model, extract the text from the chunk
+            # The exact chunk format may vary, adjust based on actual response
+            chunk_text = ""
+            if 'results' in chunk and len(chunk['results']) > 0:
+                chunk_text = chunk['results'][0].get('outputText', '')
+            elif 'outputText' in chunk:
+                chunk_text = chunk.get('outputText', '')
+                
+            # Add to our buffer
+            full_response += chunk_text
+            
+            # Check if this chunk has plot tags
+            # Note: This is simplified - in real use you might need a more
+            # sophisticated approach to handle partial plot tags spanning multiple chunks
+            if '[[PLOT' in full_response and ']]' in full_response:
+                # Process plot request
+                processed_text = process_plot_in_streaming(full_response)
+                # Update our buffer with processed text
+                full_response = processed_text
+                
+            # Send this chunk to client
+            yield f"data: {json.dumps({'text': chunk_text})}\n\n"
+            
+    except Exception as e:
+        print("Streaming error:", e)
+        error_message = {'error': str(e)}
+        yield f"data: {json.dumps(error_message)}\n\n"
+
+def process_plot_in_streaming(text):
+    """Process plot requests in streaming mode"""
+    if '[[PLOT' not in text or ']]' not in text:
+        return text
+        
+    try:
+        # Extract plot information
+        plot_info = text.split('[[PLOT')[1].split(']]')[0].strip()
+        plot_params = json.loads(plot_info)
+        
+        # Get the specified sheet
+        sheet = plot_params.get('sheet', list(file_data['dataframes'].keys())[0])
+        df = pd.DataFrame(file_data['dataframes'][sheet])
+        
+        # Generate the plot
+        plot_image = generate_plot(
+            df,
+            plot_params.get('type', 'bar'),
+            plot_params.get('x'),
+            plot_params.get('y'),
+            plot_params.get('title')
+        )
+        
+        # Replace the plot placeholder with the actual image
+        return text.replace(f'[[PLOT{plot_info}]]', f'![{plot_params.get("title", "Plot")}]({plot_image})')
+    
+    except Exception as e:
+        print("Plot processing error:", e)
+        # If there's an error, return the original text
+        return text
+    
+    
 if __name__ == '__main__':
     app.run(debug=True)
