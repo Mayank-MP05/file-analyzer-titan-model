@@ -65,6 +65,12 @@ You job is to write python code that fits in the user requested query
 
 Write a Python script using Matplotlib (or Seaborn/Plotly) to create a [type of diagram, e.g., bar chart, pie chart, line graph, scatter plot]. The data should be {file_insights}. Ensure the code is well-commented, and the diagram includes appropriate labels, titles, legends, and colors. Save the diagram as a PNG file. Also, add code to display the plot using plt.show().
 
+Special Commands:
+1. To generate visualizations, use:
+
+
+2. For Python code execution:
+
 Do not write plain text, Just write python code.
 
 user requested query: 

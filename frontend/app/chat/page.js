@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import Head from 'next/head';
 import ReactMarkdown from 'react-markdown';
 import axios from 'axios';
+import MarkdownRenderer from './MarkdownRenderer';
 
 export default function Home() {
   const [messages, setMessages] = useState([]);
@@ -211,7 +212,7 @@ export default function Home() {
                     msg.role === 'user' ? 'ml-auto' : ''
                   }`}
                 >
-                  <ReactMarkdown>{msg.content}</ReactMarkdown>
+                  <MarkdownRenderer content={msg.content}></MarkdownRenderer>
                 </div>
               ))
             )}
