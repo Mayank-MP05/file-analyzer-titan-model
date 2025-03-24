@@ -16,7 +16,6 @@ from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 load_dotenv()
 
-
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
@@ -61,26 +60,23 @@ def create_prompt(message, file_insights):
     
     # Create the system prompt text
     system_prompt = """
-You are an AI assistant specialized in analyzing and explaining Excel data. Your role is to help users understand the data, generate insights, create visualizations, and answer questions about the data.
+You are expert data analyst with 15 years of experience.
+You job is to write python code that fits in the user requested query
 
-Instructions:
-- Always analyze the data thoroughly before responding
-- You can create plots, charts, and tables to visualize data
-- If the user asks for Python code, provide executable code with explanations
-- Format your responses in markdown for readability
-- Include relevant statistics when analyzing numerical data
-```
+Write a Python script using Matplotlib (or Seaborn/Plotly) to create a [type of diagram, e.g., bar chart, pie chart, line graph, scatter plot]. The data should be {file_insights}. Ensure the code is well-commented, and the diagram includes appropriate labels, titles, legends, and colors. Save the diagram as a PNG file. Also, add code to display the plot using plt.show().
 
-Available Data Information:
-{file_insights}
-The user has uploaded this Excel file and wants assistance with understanding and analyzing it. Help them with accurate, precise responses based on the data provided.
+Do not write plain text, Just write python code.
+
+user requested query: 
 """
     
     # Format the system prompt with file insights
-    formatted_system_prompt = system_prompt.format(file_insights=json.dumps(file_insights, indent=2))
+    formatted_system_prompt = system_prompt.format(
+        file_insights=json.dumps(file_insights, indent=2)
+    )
     
     # Create the combined prompt for Titan
-    combined_prompt = formatted_system_prompt + "\n\nUser: " + message
+    combined_prompt = formatted_system_prompt + "\n\n: " + message
     
     # Titan format uses inputText and textGenerationConfig
     print("combined_prompt: ", combined_prompt)
@@ -172,7 +168,7 @@ def upload_file():
         })
     
     except Exception as e:
-        print("upload failure: "+e)
+        print("upload failure: ",e)
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/chat', methods=['POST'])

@@ -158,18 +158,18 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
       <Head>
-        <title>File-based Chatbot</title>
+        <title>Fibe GPT</title>
         <meta name="description" content="Chat with your Excel files" />
       </Head>
 
-      <header className="bg-blue-600 text-white p-4">
-        <h1 className="text-2xl font-bold">File-based Chatbot</h1>
+      <header className="bg-[#079f9f] text-white p-4">
+        <h1 className="text-2xl font-bold">Fibe GPT</h1>
       </header>
 
       <main className="flex-1 flex flex-col max-w-4xl mx-auto w-full p-4">
         <div className="mb-4">
           <div className="flex items-center space-x-2">
-            <label className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded cursor-pointer">
+            <label className="bg-[#079f9f] hover:bg-[#079f9f] text-white py-2 px-4 rounded cursor-pointer">
               {fileUploaded ? 'Change File' : 'Upload Excel File'}
               <input
                 type="file"
@@ -185,7 +185,7 @@ export default function Home() {
             )}
             {loading && (
               <div className="ml-2">
-                <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-blue-500"></div>
+                <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-[#079f9f]"></div>
               </div>
             )}
           </div>
@@ -203,10 +203,10 @@ export default function Home() {
                   key={index}
                   className={`${
                     msg.role === 'user'
-                      ? 'bg-blue-100 ml-auto'
+                      ? 'bg-[#c5eeee] ml-auto'
                       : msg.role === 'system'
                       ? 'bg-gray-100'
-                      : 'bg-green-100'
+                      : 'bg-[#eafafa]'
                   } rounded-lg p-3 max-w-[80%] text-black ${
                     msg.role === 'user' ? 'ml-auto' : ''
                   }`}
@@ -232,15 +232,15 @@ export default function Home() {
                     ? "Processing..."
                     : "Type your message here..."
                 }
-                className="flex-1 border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="flex-1 border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#079f9f] text-black"
               />
               <button
                 type="submit"
                 disabled={!fileUploaded || loading || !input.trim()}
-                className={`bg-blue-500 text-white px-4 py-2 rounded-lg ${
+                className={`bg-[#079f9f] text-white px-4 py-2 rounded-lg ${
                   !fileUploaded || loading || !input.trim()
                     ? 'opacity-50 cursor-not-allowed'
-                    : 'hover:bg-blue-600'
+                    : 'hover:bg-[#079f9f]'
                 }`}
               >
                 Send
