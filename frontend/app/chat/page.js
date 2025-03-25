@@ -22,6 +22,7 @@ export default function Home() {
   useEffect(() => {
     scrollToBottom();
   }, [messages, streamingMessage]);
+  console.log("messages: ", messages)
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
@@ -159,12 +160,12 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
       <Head>
-        <title>Fibe GPT</title>
+        <title>Fibe File GPT</title>
         <meta name="description" content="Chat with your Excel files" />
       </Head>
 
       <header className="bg-[#079f9f] text-white p-4">
-        <h1 className="text-2xl font-bold">Fibe GPT</h1>
+        <h1 className="text-2xl font-bold">Fibe File GPT</h1>
       </header>
 
       <main className="flex-1 flex flex-col max-w-4xl mx-auto w-full p-4">

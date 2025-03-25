@@ -48,10 +48,10 @@ def generate_file_insights(df):
         'column_count': len(df.columns),
         'columns': list(df.columns),
         'data_types': {col: str(dtype) for col, dtype in df.dtypes.items()},
-        'missing_values': df.isnull().sum().to_dict(),
-        'numeric_columns': df.select_dtypes(include=['number']).columns.tolist(),
-        'categorical_columns': df.select_dtypes(include=['object']).columns.tolist(),
-        'sample_data': df.head(5).to_dict()
+        # 'missing_values': df.isnull().sum().to_dict(),
+        # 'numeric_columns': df.select_dtypes(include=['number']).columns.tolist(),
+        # 'categorical_columns': df.select_dtypes(include=['object']).columns.tolist(),
+        # 'sample_data': df.head(5).to_dict()
     }
     return insights
 
@@ -60,20 +60,14 @@ def create_prompt(message, file_insights):
     
     # Create the system prompt text
     system_prompt = """
-You are expert data analyst with 15 years of experience.
-You job is to write python code that fits in the user requested query
+You are an expert data analyst with 15 years of experience. Your job is to write Python code that fits the user-requested query.
+
+I have a input file in uploads/sales-data-sample.xlsx
 
 Write a Python script using Matplotlib (or Seaborn/Plotly) to create a [type of diagram, e.g., bar chart, pie chart, line graph, scatter plot]. The data should be {file_insights}. Ensure the code is well-commented, and the diagram includes appropriate labels, titles, legends, and colors. Save the diagram as a PNG file. Also, add code to display the plot using plt.show().
 
-Special Commands:
-1. To generate visualizations, use:
-
-
-2. For Python code execution:
-
-Do not write plain text, Just write python code.
-
-user requested query: 
+Do not write plain text—only return executable Python code.
+JUST RETURN OUTPUT AS A PYTHON CODE
 """
     
     # Format the system prompt with file insights
@@ -82,7 +76,7 @@ user requested query:
     )
     
     # Create the combined prompt for Titan
-    combined_prompt = formatted_system_prompt + "\n\n: " + message
+    combined_prompt = formatted_system_prompt + "\n\nUser: " + message
     
     # Titan format uses inputText and textGenerationConfig
     print("combined_prompt: ", combined_prompt)
